@@ -101,7 +101,6 @@ app.post('/import', upload.single('excelFile'), async (req, res) => {
     // Supprimez le fichier téléchargé après l'importation
     fs.unlinkSync(filePath);
 });
-
 // Route d'enregistrement (signup)
 app.post('/signup', async (req, res) => {
     const { username, password } = req.body;
@@ -257,7 +256,37 @@ app.delete('/personnel/:matricule', async (req, res) => {
         res.status(500).json({ message: 'Une erreur s\'est produite lors de la suppression du Personnel' });
     }
 });
+app.get('/personnel-count', async (req, res) => {
+    try {
+        const query = 'SELECT COUNT(*) AS count FROM personnel';
+        const result = await pool.query(query);
+        const count = result.rows[0].count;
+        res.status(200).json({ count });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du nombre de personnels :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+app.get('/personnel-search', async (req, res) => {
+    const { q } = req.query;
 
+    if (!q) {
+        return res.status(400).json({ error: 'Le paramètre de recherche est requis' });
+    }
+
+    try {
+        const searchTerm = `%${q.toLowerCase()}%`;
+        const { rows } = await pool.query(
+            'SELECT matricule, nom_prenom, matricule, profession FROM personnel WHERE LOWER(nom_prenom) LIKE $1 OR LOWER(profession) LIKE $1 OR LOWER(matricule) LIKE $1',
+            [searchTerm]
+        );
+
+        res.json(rows);
+    } catch (err) {
+        console.error('Erreur lors de la recherche d\'employés :', err);
+        res.status(500).json({ error: 'Une erreur est survenue lors de la recherche d\'employés' });
+    }
+});
 //operations des type d'actes
 app.post('/type_actes', async (req, res) => {
     const { libelle, create_by } = req.body;
@@ -288,7 +317,6 @@ app.get('/type_actes', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
 //operation des type de formations sanitaire
 app.post('/type_fs', async (req, res) => {
     const { libelle, create_by } = req.body;
@@ -319,7 +347,6 @@ app.get('/type_fs', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
 //operation des type d'utilisateur
 app.post('/type_user', async (req, res) => {
     const { libelle, create_by } = req.body;
@@ -350,8 +377,6 @@ app.get('/type_user', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
-
 //operation des fonction de service
 app.post('/service_fonction', async (req, res) => {
     const { libelle, create_by } = req.body;
@@ -382,7 +407,6 @@ app.get('/service_fonction', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
 //operation des fonction de service
 app.post('/adress', async (req, res) => {
     const { libelle, create_by } = req.body;
@@ -413,7 +437,6 @@ app.get('/adress', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
 // Endpoint pour la création d'un acte avec le fichier PDF
 app.post('/actes', upload.single('pdf'), async (req, res) => {
     const pdfData = fs.readFileSync(req.file.path);
@@ -448,8 +471,6 @@ app.get('/actes', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
-
 app.post('/formation_sanitaire', async (req, res) => {
 
     const { id_type, id_adress, libelle, } = req.body;
@@ -480,8 +501,6 @@ app.get('/formation_sanitaire', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
-
 app.post('/lieu_service', async (req, res) => {
 
     const { id_perso, id_acte, id_fsactuel, id_fsnouvelle } = req.body;
@@ -510,6 +529,17 @@ app.get('/lieu_service/:id_perso', async (req, res) => {
         res.status(200).json(lieu_service);
     } catch (error) {
         console.error('Erreur lors de la récupération des lieu_service :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+app.get('/lieu_service-count', async (req, res) => {
+    try {
+        const query = 'SELECT COUNT(*) AS count FROM lieu_service';
+        const result = await pool.query(query);
+        const count = result.rows[0].count;
+        res.status(200).json({ count });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du nombre de lieu_service :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -544,7 +574,17 @@ app.get('/mise_stage/:id_perso', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
+app.get('/mise_stage-count', async (req, res) => {
+    try {
+        const query = 'SELECT COUNT(*) AS count FROM mise_stage';
+        const result = await pool.query(query);
+        const count = result.rows[0].count;
+        res.status(200).json({ count });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du nombre de mise_stage :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
 app.post('/priseService_repriseService', async (req, res) => {
 
     const { id_perso, nom_prenom, sex, situation_matri, region_origine, date_naissance, lieu_naissance, telephone, id_fs, corp, grade, specialite, piece_jointe } = req.body;
@@ -575,9 +615,6 @@ app.get('/priseService_repriseService', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
-
-
 app.post('/doc_auth', upload.single('pdf'), async (req, res) => {
     const { nom_concerne, mail, phone, descript, localisation } = req.body;
 
@@ -596,6 +633,17 @@ app.post('/doc_auth', upload.single('pdf'), async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
+app.get('/priseService_repriseService-count', async (req, res) => {
+    try {
+        const query = 'SELECT COUNT(*) AS count FROM priseService_repriseService';
+        const result = await pool.query(query);
+        const count = result.rows[0].count;
+        res.status(200).json({ count });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du nombre de priseService_repriseService :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
 app.get('/doc_auth', async (req, res) => {
     try {
         const query = 'SELECT * FROM doc_auth';
@@ -607,7 +655,6 @@ app.get('/doc_auth', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
 // Route d'enregistrement d'une realisation
 app.post('/realisations', upload.single('pdf'), async (req, res) => {
     const { nom_auteur, poste, titre, descript, region } = req.body;
@@ -668,12 +715,10 @@ app.get('/offres', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-
 // Route protégée - Exemple d'utilisation du middleware d'authentification
 app.get('/protected', authenticateToken, (req, res) => {
     res.json({ message: 'Route protégée accessible avec succès', user: req.user });
 });
-
 // Démarrer le serveur
 const port = 3000;
 app.listen(port, () => {
