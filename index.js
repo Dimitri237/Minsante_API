@@ -52,13 +52,17 @@ async function importData(filePath) {
                 pays_formation: row.pays_formation,
                 durée_spécialisation: row.durée_spécialisation,
                 lieu_service: row.lieu_service,
+                fonction: row.fonction,
+                contact: row.contact,
+                district: row.district,
+                region: row.region,
                 create_at: row.create_at,
                 update_at: row.update_at,
             };
         });
 
         const tableName = 'personnel'; // Remplacez par le nom réel de votre table (assurez-vous qu'elle existe)
-        const insertQuery = `INSERT INTO ${tableName} (matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`;
+        const insertQuery = `INSERT INTO ${tableName} (matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, fonction, contact, district, region, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`;
 
         for (const row of processedData) {
             const values = [
@@ -73,6 +77,10 @@ async function importData(filePath) {
                 row.pays_formation,
                 row.durée_spécialisation,
                 row.lieu_service,
+                row.fonction,
+                row.contact,
+                row.district,
+                row.region,
                 row.create_at,
                 row.update_at,
             ];
@@ -198,10 +206,9 @@ app.post('/personnel', async (req, res) => {
     const { matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service } = req.body;
     const update_at = new Date();
     const create_at = new Date();
-    const create_by = null;
 
-    const query = 'INSERT INTO personnel (matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, create_at, update_at, create_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
-    const values = [matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, create_at, update_at, create_by];
+    const query = 'INSERT INTO personnel (matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)';
+    const values = [matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, create_at, update_at];
 
     try {
         await pool.query(query, values);
@@ -317,6 +324,18 @@ app.get('/type_actes', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
+//recuperation des categories d'acte
+app.get('/categorie_acte', async (req, res) => {
+    try {
+        const query = 'SELECT * FROM categorie_acte';
+        const result = await pool.query(query);
+        const categorie_acte = result.rows;
+        res.status(200).json(categorie_acte);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des categories actes :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
 //operation des type de formations sanitaire
 app.post('/type_fs', async (req, res) => {
     const { libelle, create_by } = req.body;
@@ -344,6 +363,18 @@ app.get('/type_fs', async (req, res) => {
         res.status(200).json(type_fs);
     } catch (error) {
         console.error('Erreur lors de la récupération des type  :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+//recuperation des regions
+app.get('/region', async (req, res) => {
+    try {
+        const query = 'SELECT * FROM region';
+        const result = await pool.query(query);
+        const region = result.rows;
+        res.status(200).json(region);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des regions  :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -442,15 +473,15 @@ app.post('/actes', upload.single('pdf'), async (req, res) => {
     const pdfData = fs.readFileSync(req.file.path);
     const pdfBase64 = pdfData.toString('base64');
 
-    const { type, titre, description, numero } = req.body;
+    const { type, titre, description, numero, categorie, signature_date, signataire } = req.body;
 
     const id = uuidv4(); // Générer un nouvel ID unique
     const create_at = new Date();
     const update_at = new Date();
     const pdfPath = req.file.path; // Chemin du fichier PDF enregistré
 
-    const query = 'INSERT INTO actes (id, type, titre, description, create_at, update_at, pdf_data, numero) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
-    const values = [id, type, titre, description, create_at, update_at, pdfBase64, numero];
+    const query = 'INSERT INTO actes (id, type, titre, description, create_at, update_at, pdf_data, numero, categorie, signature_date, signataire) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+    const values = [id, type, titre, description, create_at, update_at, pdfBase64, numero, categorie, signature_date, signataire];
 
     try {
         await pool.query(query, values);
@@ -473,14 +504,14 @@ app.get('/actes', async (req, res) => {
 });
 app.post('/formation_sanitaire', async (req, res) => {
 
-    const { id_type, id_adress, libelle, } = req.body;
+    const { id_type, id_adress, libelle, region, district } = req.body;
 
     const id = uuidv4(); // Générer un nouvel ID unique
     const create_at = new Date();
     const update_at = new Date();
 
-    const query = 'INSERT INTO formation_sanitaire (id, id_type, id_adress, libelle, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6)';
-    const values = [id, id_type, id_adress, libelle, create_at, update_at];
+    const query = 'INSERT INTO formation_sanitaire (id, id_type, id_adress, libelle, create_at, update_at, region, district) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
+    const values = [id, id_type, id_adress, libelle, create_at, update_at, region, district];
 
     try {
         await pool.query(query, values);
@@ -503,20 +534,53 @@ app.get('/formation_sanitaire', async (req, res) => {
 });
 app.post('/lieu_service', async (req, res) => {
 
-    const { id_perso, id_acte, id_fsactuel, id_fsnouvelle } = req.body;
+    const { id_perso, id_acte, id_fsactuel, id_fsnouvelle, date_signatureacte, categorie_acte, poste } = req.body;
 
     const id = uuidv4(); // Générer un nouvel ID unique
     const create_at = new Date();
     const update_at = new Date();
+    
 
-    const query = 'INSERT INTO lieu_service (id,  id_perso, id_acte, id_fsActuel, id_fsNouvelle, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7)';
-    const values = [id, id_perso, id_acte, id_fsactuel, id_fsnouvelle, create_at, update_at];
+    const query = 'INSERT INTO lieu_service (id,  id_perso, id_acte, id_fsActuel, id_fsNouvelle, create_at, update_at, date_signatureacte, categorie_acte, poste ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
+    const values = [id, id_perso, id_acte, id_fsactuel, id_fsnouvelle, create_at, update_at, date_signatureacte, categorie_acte, poste ];
 
     try {
         await pool.query(query, values);
         res.status(201).json({ message: 'lieu_service créé avec succès' });
     } catch (error) {
         console.error('Erreur lors de l\'insertion de lieu_service :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+app.post('/approbation_stage', async (req, res) => {
+
+    const { id_perso, id_acte, date_signatureacte, categorie_acte, lieu_stage, debut_stage, fin_stage } = req.body;
+
+    const id = uuidv4(); // Générer un nouvel ID unique
+    const create_at = new Date();
+    const update_at = new Date();
+    
+
+    const query = 'INSERT INTO approbation_stage (id,  id_perso, id_acte, create_at, update_at, date_signatureacte, categorie_acte, lieu_stage, debut_stage, fin_stage ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
+    const values = [id, id_perso, id_acte, create_at, update_at, date_signatureacte, categorie_acte, lieu_stage, debut_stage, fin_stage ];
+
+    try {
+        await pool.query(query, values);
+        res.status(201).json({ message: 'lieu_service créé avec succès' });
+    } catch (error) {
+        console.error('Erreur lors de l\'insertion de lieu_service :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+app.get('/approbation_stage/:id_perso', async (req, res) => {
+    try {
+        const { id_perso } = req.params;
+        const query = 'SELECT * FROM approbation_stage WHERE id_perso = $1';
+        const result = await pool.query(query, [id_perso]);
+        const approbation_stage = result.rows;
+        res.status(200).json(approbation_stage);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des approbation_stage :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
