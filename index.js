@@ -31,16 +31,16 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+const Papa = require('papaparse');
+
 async function importData(filePath) {
-    const create_at = new Date();
-    const update_at = new Date();
     try {
-        const workbook = XLSX.readFile(filePath);
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json(worksheet);
-        const processedData = data.map(row => {
-            return {
+        const csvData = await fs.promises.readFile(filePath, 'utf8');
+        const { data } = Papa.parse(csvData, { header: true });
+        const uniqueData = new Set();
+
+        for (const row of data) {
+            const rowData = {
                 matricule: row.matricule,
                 nom_prenom: row.nom_prenom,
                 date_naissance: row.date_naissance,
@@ -48,21 +48,25 @@ async function importData(filePath) {
                 pays_naissance: row.pays_naissance,
                 sexe: row.sexe,
                 profession: row.profession,
-                spécialisation: row.spécialisation,
+                specialisation: row.specialisation,
                 pays_formation: row.pays_formation,
-                durée_spécialisation: row.durée_spécialisation,
+                duree_specialisation: row.duree_specialisation,
                 lieu_service: row.lieu_service,
                 fonction: row.fonction,
                 contact: row.contact,
                 district: row.district,
                 region: row.region,
-                create_at: row.create_at,
-                update_at: row.update_at,
             };
-        });
+            const rowKey = JSON.stringify(rowData);
+            if (!uniqueData.has(rowKey)) {
+                uniqueData.add(rowKey);
+            }
+        }
+
+        const processedData = Array.from(uniqueData).map(rowKey => JSON.parse(rowKey));
 
         const tableName = 'personnel'; // Remplacez par le nom réel de votre table (assurez-vous qu'elle existe)
-        const insertQuery = `INSERT INTO ${tableName} (matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, fonction, contact, district, region, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`;
+        const insertQuery = `INSERT INTO ${tableName} (matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, specialisation, pays_formation, duree_specialisation, lieu_service, fonction, contact, district, region) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`;
 
         for (const row of processedData) {
             const values = [
@@ -73,27 +77,23 @@ async function importData(filePath) {
                 row.pays_naissance,
                 row.sexe,
                 row.profession,
-                row.spécialisation,
+                row.specialisation,
                 row.pays_formation,
-                row.durée_spécialisation,
+                row.duree_specialisation,
                 row.lieu_service,
                 row.fonction,
                 row.contact,
                 row.district,
                 row.region,
-                row.create_at,
-                row.update_at,
             ];
             await pool.query(insertQuery, values);
         }
 
         console.log('Données importées avec succès !');
-
     } catch (error) {
         console.error('Erreur lors de l\'importation des données :', error);
     }
 }
-
 // Appel de la fonction importData avec le chemin du fichier
 app.post('/import', upload.single('excelFile'), async (req, res) => {
     const filePath = req.file.path; // Chemin d'accès au fichier téléchargé
