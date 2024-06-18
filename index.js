@@ -22,8 +22,8 @@ const upload = multer({ storage: storage });
 const pool = new Pool({
     host: 'localhost',
     user: 'postgres',
-    password: '771817',
-    database: 'minsante2',
+    password: 'Tad2005',
+    database: 'Minsante',
     port: 5432
 });
 
@@ -307,9 +307,9 @@ app.post('/type_actes', async (req, res) => {
 
     try {
         await pool.query(query, values);
-        res.status(201).json({ message: 'type créé avec succès' });
+        res.status(201).json({ message: 'Type d\'acte créé avec succès' });
     } catch (error) {
-        console.error('Erreur lors de l\'insertion du type :', error);
+        console.error('Erreur lors de l\'insertion du type d\'acte :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -421,9 +421,9 @@ app.post('/service_fonction', async (req, res) => {
 
     try {
         await pool.query(query, values);
-        res.status(201).json({ message: 'type créé avec succès' });
+        res.status(201).json({ message: 'Type de service créé avec succès' });
     } catch (error) {
-        console.error('Erreur lors de l\'insertion du type :', error);
+        console.error('Erreur lors de l\'insertion du type de service :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -451,9 +451,9 @@ app.post('/adress', async (req, res) => {
 
     try {
         await pool.query(query, values);
-        res.status(201).json({ message: 'adress créé avec succès' });
+        res.status(201).json({ message: 'Adresse créée avec succès' });
     } catch (error) {
-        console.error('Erreur lors de l\'insertion de l\'adress :', error);
+        console.error('Erreur lors de la creation de l\'adresse :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -515,9 +515,9 @@ app.post('/formation_sanitaire', async (req, res) => {
 
     try {
         await pool.query(query, values);
-        res.status(201).json({ message: 'formation_sanitaire créé avec succès' });
+        res.status(201).json({ message: 'Structure sanitaire créé avec succès' });
     } catch (error) {
-        console.error('Erreur lors de l\'insertion de la formation_sanitaire :', error);
+        console.error('Erreur lors de l\'insertion de la Structure :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -528,7 +528,7 @@ app.get('/formation_sanitaire', async (req, res) => {
         const formation_sanitaire = result.rows;
         res.status(200).json(formation_sanitaire);
     } catch (error) {
-        console.error('Erreur lors de la récupération des formation_sanitaire :', error);
+        console.error('Erreur lors de la récupération des structures sanitaires :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -546,9 +546,9 @@ app.post('/lieu_service', async (req, res) => {
 
     try {
         await pool.query(query, values);
-        res.status(201).json({ message: 'lieu_service créé avec succès' });
+        res.status(201).json({ message: 'Affectation créé avec succès' });
     } catch (error) {
-        console.error('Erreur lors de l\'insertion de lieu_service :', error);
+        console.error('Erreur lors de l\'ajout de l\'affectation :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -566,9 +566,9 @@ app.post('/approbation_stage', async (req, res) => {
 
     try {
         await pool.query(query, values);
-        res.status(201).json({ message: 'lieu_service créé avec succès' });
+        res.status(201).json({ message: 'Mise en stage créé avec succès' });
     } catch (error) {
-        console.error('Erreur lors de l\'insertion de lieu_service :', error);
+        console.error('Erreur lors de l\'insertion de la mise en stage :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -580,7 +580,7 @@ app.get('/approbation_stage/:id_perso', async (req, res) => {
         const approbation_stage = result.rows;
         res.status(200).json(approbation_stage);
     } catch (error) {
-        console.error('Erreur lors de la récupération des approbation_stage :', error);
+        console.error('Erreur lors de la récupération des approbation de stage :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -592,7 +592,7 @@ app.get('/lieu_service/:id_perso', async (req, res) => {
         const lieu_service = result.rows;
         res.status(200).json(lieu_service);
     } catch (error) {
-        console.error('Erreur lors de la récupération des lieu_service :', error);
+        console.error('Erreur lors des affectation :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
@@ -603,7 +603,7 @@ app.get('/lieu_service-count', async (req, res) => {
         const count = result.rows[0].count;
         res.status(200).json({ count });
     } catch (error) {
-        console.error('Erreur lors de la récupération du nombre de lieu_service :', error);
+        console.error('Erreur lors de la récupération du nombre d\'affectation :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
