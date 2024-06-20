@@ -22,8 +22,8 @@ const upload = multer({ storage: storage });
 const pool = new Pool({
     host: 'localhost',
     user: 'postgres',
-    password: 'Tad2005',
-    database: 'Minsante',
+    password: '771817',
+    database: 'minsante2',
     port: 5432
 });
 
@@ -539,10 +539,10 @@ app.post('/lieu_service', async (req, res) => {
     const id = uuidv4(); // Générer un nouvel ID unique
     const create_at = new Date();
     const update_at = new Date();
-    
+
 
     const query = 'INSERT INTO lieu_service (id,  id_perso, id_acte, id_fsActuel, id_fsNouvelle, create_at, update_at, date_signatureacte, categorie_acte, poste ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
-    const values = [id, id_perso, id_acte, id_fsactuel, id_fsnouvelle, create_at, update_at, date_signatureacte, categorie_acte, poste ];
+    const values = [id, id_perso, id_acte, id_fsactuel, id_fsnouvelle, create_at, update_at, date_signatureacte, categorie_acte, poste];
 
     try {
         await pool.query(query, values);
@@ -559,14 +559,14 @@ app.post('/approbation_stage', async (req, res) => {
     const id = uuidv4(); // Générer un nouvel ID unique
     const create_at = new Date();
     const update_at = new Date();
-    
+
 
     const query = 'INSERT INTO approbation_stage (id,  id_perso, id_acte, create_at, update_at, date_signatureacte, categorie_acte, lieu_stage, debut_stage, fin_stage ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
-    const values = [id, id_perso, id_acte, create_at, update_at, date_signatureacte, categorie_acte, lieu_stage, debut_stage, fin_stage ];
+    const values = [id, id_perso, id_acte, create_at, update_at, date_signatureacte, categorie_acte, lieu_stage, debut_stage, fin_stage];
 
     try {
         await pool.query(query, values);
-        res.status(201).json({ message: 'Mise en stage créé avec succès' });
+        res.status(201).json({ message: 'Approbation créé avec succès' });
     } catch (error) {
         console.error('Erreur lors de l\'insertion de la mise en stage :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
@@ -607,6 +607,17 @@ app.get('/lieu_service-count', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
+app.get('/lieu_service', async (req, res) => {
+    try {
+        const query = 'SELECT * FROM lieu_service';
+        const result = await pool.query(query);
+        const lieu_service = result.rows;
+        res.status(200).json(lieu_service);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des affectations :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
 app.post('/mise_stage', async (req, res) => {
 
     const { id_perso, nom_prenom, sex, situation_matri, date_naissance, lieu_naissance, telephone, piece, id_fs } = req.body;
@@ -623,6 +634,17 @@ app.post('/mise_stage', async (req, res) => {
         res.status(201).json({ message: 'mise_stage créé avec succès' });
     } catch (error) {
         console.error('Erreur lors de l\'insertion de mise_stage :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+app.get('/mise_stage', async (req, res) => {
+    try {
+        const query = 'SELECT * FROM mise_stage';
+        const result = await pool.query(query);
+        const mise_stage = result.rows;
+        res.status(200).json(mise_stage);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des mise_stage :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
