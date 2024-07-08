@@ -203,12 +203,12 @@ app.delete('/realisations/:id', async (req, res) => {
     }
 });
 app.post('/personnel', async (req, res) => {
-    const { matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service } = req.body;
-    const update_at = new Date();
-    const create_at = new Date();
+    const { matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, specialisation, pays_formation, duree_specialisation, lieu_service } = req.body;
+    // const update_at = new Date();
+    // const create_at = new Date();
 
-    const query = 'INSERT INTO personnel (matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)';
-    const values = [matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, spécialisation, pays_formation, durée_spécialisation, lieu_service, create_at, update_at];
+    const query = 'INSERT INTO personnel (matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, specialisation, pays_formation, duree_specialisation, lieu_service) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+    const values = [matricule, nom_prenom, date_naissance, lieu_naissance, pays_naissance, sexe, profession, specialisation, pays_formation, duree_specialisation, lieu_service];
 
     try {
         await pool.query(query, values);
@@ -219,6 +219,7 @@ app.post('/personnel', async (req, res) => {
     }
 });
 app.get('/personnel', async (req, res) => {
+
     try {
         const query = 'SELECT * FROM personnel';
         const result = await pool.query(query);
@@ -673,14 +674,14 @@ app.get('/mise_stage-count', async (req, res) => {
 });
 app.post('/priseService_repriseService', async (req, res) => {
 
-    const { id_perso, nom_prenom, sex, situation_matri, region_origine, date_naissance, lieu_naissance, telephone, id_fs, corp, grade, specialite, piece_jointe } = req.body;
+    const { id_perso, nom_prenom, sex, situation_matri, region_origine, date_naissance, lieu_naissance, telephone, corp, grade, specialite, type_recrutement, justificatif, status } = req.body;
 
     const id = uuidv4(); // Générer un nouvel ID unique
     const create_at = new Date();
     const update_at = new Date();
 
-    const query = 'INSERT INTO priseService_repriseService (id,  id_perso, nom_prenom, sex, situation_matri, region_origine, date_naissance, lieu_naissance, telephone, id_fs, corp, grade, specialite, piece_jointe, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)';
-    const values = [id, id_perso, nom_prenom, sex, situation_matri, region_origine, date_naissance, lieu_naissance, telephone, id_fs, corp, grade, specialite, piece_jointe, create_at, update_at];
+    const query = 'INSERT INTO priseService_repriseService (id,  id_perso, nom_prenom, sex, situation_matri, region_origine, date_naissance, lieu_naissance, telephone, corp, grade, specialite, type_recrutement, justificatif, status, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)';
+    const values = [id, id_perso, nom_prenom, sex, situation_matri, region_origine, date_naissance, lieu_naissance, telephone, corp, grade, specialite, type_recrutement, justificatif, status, create_at, update_at];
 
     try {
         await pool.query(query, values);
@@ -689,11 +690,34 @@ app.post('/priseService_repriseService', async (req, res) => {
         console.error('Erreur lors de l\'insertion de priseService_repriseService :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
+}); app.post('/update-status/:id_perso', async (req, res) => {
+    try {
+        const { id_perso } = req.params;
+        const query = 'UPDATE priseService_repriseService SET status = \'Approuvé\' WHERE id_perso = $1';
+        const result = await pool.query(query, [id_perso]);
+        const mise_stage = result.rows;
+        res.status(200).json({ message: 'Statut mis à jour avec succès' });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
 });
 app.get('/priseService_repriseService', async (req, res) => {
     try {
         const query = 'SELECT * FROM priseService_repriseService';
         const result = await pool.query(query);
+        const priseService_repriseService = result.rows;
+        res.status(200).json(priseService_repriseService);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des priseService_repriseService :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+app.get('/priseService_repriseService/:id_perso', async (req, res) => {
+    try {
+        const { id_perso } = req.params;
+        const query = 'SELECT * FROM priseService_repriseService WHERE id_perso = $1';
+        const result = await pool.query(query, [id_perso]);
         const priseService_repriseService = result.rows;
         res.status(200).json(priseService_repriseService);
     } catch (error) {
