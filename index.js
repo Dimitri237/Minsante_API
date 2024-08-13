@@ -11,7 +11,7 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const env = require('./env.json');
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -833,6 +833,7 @@ app.get('/offres', async (req, res) => {
 app.get('/protected', authenticateToken, (req, res) => {
     res.json({ message: 'Route protégée accessible avec succès', user: req.user });
 });
+
 
 
 // Démarrer le serveur
