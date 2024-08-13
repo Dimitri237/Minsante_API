@@ -9,9 +9,13 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const XLSX = require('xlsx');
 const fs = require('fs');
+const env = require('./env.json');
+
+const port = 3000;
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/');
+        cb(null, null);
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + '-' + file.originalname);
@@ -20,11 +24,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const pool = new Pool({
-    host: 'localhost',
-    user: 'postgres',
-    password: '771817',
-    database: 'minsante2',
-    port: 5432
+    host: env.DB_HOST || 'localhost',
+    user: env.DB_USER || 'postgres',
+    password: env.DB_PASSWORD || '771817',
+    database: env.DB_NAME || 'minsante',
+    port: env.PORT || 5432
 });
 
 const app = express();
@@ -829,8 +833,9 @@ app.get('/offres', async (req, res) => {
 app.get('/protected', authenticateToken, (req, res) => {
     res.json({ message: 'Route protégée accessible avec succès', user: req.user });
 });
+
+
 // Démarrer le serveur
-const port = 3000;
 app.listen(port, () => {
     console.log(`Le serveur est en cours d'exécution sur le port ${port}`);
 });
