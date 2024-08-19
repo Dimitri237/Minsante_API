@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+
 const authenticateToken = require('./authMiddleware');
 const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
@@ -295,7 +296,6 @@ app.get('/personnel-search', async (req, res) => {
         res.status(500).json({ error: 'Une erreur est survenue lors de la recherche d\'employés' });
     }
 });
-//operations des type d'actes
 app.post('/type_actes', async (req, res) => {
     const { libelle, create_by } = req.body;
 
@@ -325,7 +325,6 @@ app.get('/type_actes', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-//recuperation des categories d'acte
 app.get('/categorie_acte', async (req, res) => {
     try {
         const query = 'SELECT * FROM categorie_acte';
@@ -337,7 +336,6 @@ app.get('/categorie_acte', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-//operation des type de formations sanitaire
 app.post('/type_fs', async (req, res) => {
     const { libelle, create_by } = req.body;
 
@@ -367,7 +365,6 @@ app.get('/type_fs', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-//recuperation des regions
 app.get('/region', async (req, res) => {
     try {
         const query = 'SELECT * FROM region';
@@ -379,7 +376,6 @@ app.get('/region', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-//operation des type d'utilisateur
 app.post('/type_user', async (req, res) => {
     const { libelle, create_by } = req.body;
 
@@ -409,7 +405,6 @@ app.get('/type_user', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-//operation des fonction de service
 app.post('/service_fonction', async (req, res) => {
     const { libelle, create_by } = req.body;
 
@@ -439,7 +434,6 @@ app.get('/service_fonction', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-//operation des fonction de service
 app.post('/adress', async (req, res) => {
     const { libelle, create_by } = req.body;
 
@@ -469,7 +463,6 @@ app.get('/adress', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-// Endpoint pour la création d'un acte avec le fichier PDF
 app.post('/actes', upload.single('pdf'), async (req, res) => {
     const pdfData = fs.readFileSync(req.file.path);
     const pdfBase64 = pdfData.toString('base64');
@@ -690,7 +683,8 @@ app.post('/priseService_repriseService', async (req, res) => {
         console.error('Erreur lors de l\'insertion de priseService_repriseService :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
-}); app.post('/update-status/:id_perso', async (req, res) => {
+}); 
+app.post('/update-status/:id_perso', async (req, res) => {
     try {
         const { id_perso } = req.params;
         const query = 'UPDATE priseService_repriseService SET status = \'Approuvé\' WHERE id_perso = $1';
@@ -765,7 +759,6 @@ app.get('/doc_auth', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-// Route d'enregistrement d'une realisation
 app.post('/realisations', upload.single('pdf'), async (req, res) => {
     const { nom_auteur, poste, titre, descript, region } = req.body;
 
@@ -795,7 +788,6 @@ app.get('/realisations', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-// Route d'enregistrement d'une offre
 app.post('/offres', upload.single('pdf'), async (req, res) => {
     const { nom_acteur, poste, titre, descript, region } = req.body;
 
@@ -825,10 +817,10 @@ app.get('/offres', async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
-// Route protégée - Exemple d'utilisation du middleware d'authentification
 app.get('/protected', authenticateToken, (req, res) => {
     res.json({ message: 'Route protégée accessible avec succès', user: req.user });
 });
+
 // Démarrer le serveur
 const port = 3000;
 app.listen(port, () => {
