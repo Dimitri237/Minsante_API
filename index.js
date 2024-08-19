@@ -22,7 +22,8 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + '-' + file.originalname);
     }
 });
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
+const upload = multer({ storage: multer.memoryStorage() });
 
 const pool = new Pool({
     host: env.DB_HOST || 'localhost',
@@ -470,27 +471,59 @@ app.get('/adress', async (req, res) => {
     }
 });
 app.post('/actes', upload.single('pdf'), async (req, res) => {
-    const pdfData = fs.readFileSync(req.file.path);
-    const pdfBase64 = pdfData.toString('base64');
-
-    const { type, titre, description, numero, categorie, signature_date, signataire } = req.body;
-
-    const id = uuidv4(); // Générer un nouvel ID unique
-    const create_at = new Date();
-    const update_at = new Date();
-    const pdfPath = req.file.path; // Chemin du fichier PDF enregistré
-
-    const query = 'INSERT INTO actes (id, type, titre, description, create_at, update_at, pdf_data, numero, categorie, signature_date, signataire) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
-    const values = [id, type, titre, description, create_at, update_at, pdfBase64, numero, categorie, signature_date, signataire];
-
     try {
+        // Validate input data
+        const { type, titre, description, numero, categorie, signature_date, signataire } = req.body;
+        // ... validation logic ...
+
+        // Generate unique ID and timestamps
+        const id = uuidv4();
+        const create_at = new Date();
+        const update_at = new Date();
+
+        // Read and encode the PDF to Base64
+        const pdfData = req.file.buffer; // Access the buffer directly from the request
+        const pdfBase64 = pdfData.toString('base64');
+
+        // Insert data into the database
+        const query = 'INSERT INTO actes (id, type, titre, description, create_at, update_at, pdf_data, numero, categorie, signature_date, signataire) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+        const values = [id, type, titre, description, create_at, update_at, pdfBase64, numero, categorie, signature_date, signataire];
+
         await pool.query(query, values);
         res.status(201).json({ message: 'Acte créé avec succès' });
+
     } catch (error) {
-        console.error('Erreur lors de l\'insertion de l\'acte :', error);
+        console.error('Erreur lors de la création de l\'acte :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
+// app.post('/actes', upload.single('pdf'), async (req, res) => {
+//   try {
+//     // Validate input data
+//     const { type, titre, description, numero, categorie, signature_date, signataire } = req.body;
+//     // ... validation logic ...
+
+//     // Generate unique ID and timestamps
+//     const id = uuidv4();
+//     const create_at = new Date();
+//     const update_at = new Date();
+
+//     // Read and encode the PDF to Base64
+//     const pdfData = req.file.buffer; // Access the buffer directly from the request
+//     const pdfBase64 = pdfData.toString('base64');
+
+//     // Insert data into the database
+//     const query = 'INSERT INTO actes (id, type, titre, description, create_at, update_at, pdf_data, numero, categorie, signature_date, signataire) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+//     const values = [id, type, titre, description, create_at, update_at, pdfBase64, numero, categorie, signature_date, signataire];
+
+//     await pool.query(query, values);
+//     res.status(201).json({ message: 'Acte créé avec succès' });
+
+//   } catch (error) {
+//     console.error('Erreur lors de la création de l\'acte :', error);
+//     res.status(500).json({ message: 'Erreur interne du serveur' });
+//   }
+// });
 app.get('/actes', async (req, res) => {
     try {
         const query = 'SELECT * FROM actes';
@@ -689,7 +722,7 @@ app.post('/priseService_repriseService', async (req, res) => {
         console.error('Erreur lors de l\'insertion de priseService_repriseService :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
-}); 
+});
 app.post('/update-status/:id_perso', async (req, res) => {
     try {
         const { id_perso } = req.params;
