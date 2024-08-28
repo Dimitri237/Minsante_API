@@ -35,9 +35,7 @@ const pool = new Pool({
 
 const app = express();
 app.use(bodyParser.json());
-app.use(cors({
-    origin: 'http://localhost:8081'
-}));
+app.use(cors({}));
 
 const Papa = require('papaparse');
 
