@@ -32,7 +32,11 @@ const pool = new Pool({
     database: env.DB_NAME || 'minsante',
     port: env.PORT || 5432
 });
-
+const getDbConnection = () => pool;
+const handleError = (error, res) => {
+    console.error('Erreur :', error);
+    res.status(500).json({ message: 'Erreur interne du serveur' });
+};
 const app = express();
 app.use(bodyParser.json());
 app.use(cors({}));
@@ -115,37 +119,60 @@ app.post('/import', upload.single('excelFile'), async (req, res) => {
     // Supprimez le fichier téléchargé après l'importation
     fs.unlinkSync(filePath);
 });
-// Route d'enregistrement (signup)
+
 app.post('/signup', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, date_naissance, sexe, contact, email, localisation, type_u, password, create_by } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Validate required fields
+    if (!username || !password || !email) {
+        return res.status(400).json({ message: 'Username, password, and email are required.' });
+    }
 
-    const query = 'INSERT INTO users (id, username, date_naissance, image, type,, password, create_at, updat_at, create_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
-    const values = [id, username, date_naissance, image, type, hashedPassword, create_at, updat_at, create_by];
+    // Generate unique ID and hash the password
+    const id = uuidv4();
+    const saltRounds = 10;
+    const create_at = new Date();
+    const update_at = new Date();
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Prepare SQL query
+    const query = 'INSERT INTO users (id, username, date_naissance,sexe, contact, email, localisation, type_u, password, create_at, update_at, create_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)';
+    const values = [id, username, date_naissance, sexe, contact, email, localisation, type_u, hashedPassword, create_at, update_at, create_by];
 
     try {
-        await pool.query(query, values);
-        res.status(201).json({ message: 'Utilisateur créé avec succès' });
+        const dbConnection = getDbConnection();
+        const { rows } = await dbConnection.query(query, values);
+
+        // Assuming the database returns the created user ID
+        const createdUserId = rows[0]?.id;
+
+        res.status(201).json({ message: 'Utilisateur créé avec succès', createdUserId });
     } catch (error) {
-        console.error('Erreur lors de l\'insertion de l\'utilisateur :', error);
-        res.status(500).json({ message: 'Erreur interne du serveur' });
+        handleError(error, res);
     }
 });
 // Route de connexion (login)
 app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     try {
-        const query = 'SELECT * FROM users WHERE username = $1';
-        const result = await pool.query(query, [username]);
+        const query = 'SELECT * FROM users WHERE email = $1';
+        const { rows } = await pool.query(query, [email]);
 
-        if (result.rowCount === 1) {
-            const user = result.rows[0];
+        if (rows.length === 1) {
+            const user = rows[0];
 
-            if (user.password === password) {
-                const token = jwt.sign({ username }, '77181753');
-                res.json({ token });
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+
+            if (isPasswordValid) {
+                const token = jwt.sign({ userId: user.id, userName: user.username }, '77181753');
+                const userId = user.id;
+                const userName = user.username;
+
+                // Stockage de l'ID de l'utilisateur dans le localStorage
+                res.json({ token, userId, userName });
+                console.log(user.id);
+                console.log(user.username);
             } else {
                 res.status(401).json({ message: 'Mot de passe incorrect' });
             }
@@ -153,8 +180,7 @@ app.post('/login', async (req, res) => {
             res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
     } catch (error) {
-        console.error('Erreur lors de la connexion :', error);
-        res.status(500).json({ message: 'Erreur interne du serveur' });
+        handleError(error, res);
     }
 });
 app.delete('/actes/:id', async (req, res) => {
