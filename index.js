@@ -39,7 +39,7 @@ const handleError = (error, res) => {
 };
 const app = express();
 app.use(bodyParser.json());
-app.use(cors({}));
+app.use(cors());
 
 const Papa = require('papaparse');
 
