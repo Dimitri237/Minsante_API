@@ -30,7 +30,7 @@ const pool = new Pool({
     user: env.DB_USER || 'postgres',
     password: env.DB_PASSWORD || 'Gh3i4J5kL6mN7oP8',
     database: env.DB_NAME || 'minsante_db',
-    port: env.DB_PORT || 5342
+    port: env.DB_PORT || 5432
 });
 const getDbConnection = () => pool;
 const handleError = (error, res) => {
