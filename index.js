@@ -12,7 +12,7 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const env = require('./env.json');
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -26,11 +26,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: multer.memoryStorage() });
 
 const pool = new Pool({
-    host: env.DB_HOST || 'localhost',
+    host: env.DB_HOST || '15.235.184.122',
     user: env.DB_USER || 'postgres',
-    password: env.DB_PASSWORD || '771817',
-    database: env.DB_NAME || 'minsante',
-    port: env.PORT || 5432
+    password: env.DB_PASSWORD || 'Gh3i4J5kL6mN7oP8',
+    database: env.DB_NAME || 'minsante_db',
+    port: env.DB_PORT || 5342
 });
 const getDbConnection = () => pool;
 const handleError = (error, res) => {
@@ -251,28 +251,28 @@ app.post('/personnel', async (req, res) => {
 });
 app.get('/api/pdf/:id', async (req, res) => {
     const id = req.params.id;
-  
+
     try {
-      const result = await pool.query('SELECT pdf_data, numero FROM actes WHERE id = $1', [id]);
-      if (result.rows.length > 0) {
-        const pdfBase64 = result.rows[0].pdf_data;
-        const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-        const numero = result.rows[0].numero; // Récupérez le numéro
-  
-        // Configurez le nom du fichier
-        const fileName = `${numero}.pdf`; // Utilisez le numéro comme nom de fichier
-  
-        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.send(pdfBuffer);
-      } else {
-        res.status(404).send('PDF non trouvé');
-      }
+        const result = await pool.query('SELECT pdf_data, numero FROM actes WHERE id = $1', [id]);
+        if (result.rows.length > 0) {
+            const pdfBase64 = result.rows[0].pdf_data;
+            const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+            const numero = result.rows[0].numero; // Récupérez le numéro
+
+            // Configurez le nom du fichier
+            const fileName = `${numero}.pdf`; // Utilisez le numéro comme nom de fichier
+
+            res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.send(pdfBuffer);
+        } else {
+            res.status(404).send('PDF non trouvé');
+        }
     } catch (error) {
-      console.error(error);
-      res.status(500).send('Erreur serveur');
+        console.error(error);
+        res.status(500).send('Erreur serveur');
     }
-  });
+});
 app.get('/personnel', async (req, res) => {
 
     try {
