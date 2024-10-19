@@ -12,7 +12,7 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const env = require('./env.json');
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3002;
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -26,10 +26,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: multer.memoryStorage() });
 
 const pool = new Pool({
-    host: env.DB_HOST || '15.235.184.122',
+    host: env.DB_HOST || 'localhost',
     user: env.DB_USER || 'postgres',
-    password: env.DB_PASSWORD || 'Gh3i4J5kL6mN7oP8',
-    database: env.DB_NAME || 'minsante_db',
+    password: env.DB_PASSWORD || '771817',
+    database: env.DB_NAME || 'minsante',
     port: env.DB_PORT || 5432
 });
 const getDbConnection = () => pool;
@@ -104,7 +104,6 @@ async function importData(filePath) {
         console.error('Erreur lors de l\'importation des données :', error);
     }
 }
-// Appel de la fonction importData avec le chemin du fichier
 app.post('/import', upload.single('excelFile'), async (req, res) => {
     const filePath = req.file.path; // Chemin d'accès au fichier téléchargé
 
@@ -150,7 +149,6 @@ app.post('/signup', async (req, res) => {
         handleError(error, res);
     }
 });
-// Route de connexion (login)
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -271,6 +269,26 @@ app.get('/api/pdf/:id', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send('Erreur serveur');
+    }
+});
+app.get('/prise-search', async (req, res) => {
+    const { q } = req.query;
+
+    if (!q) {
+        return res.status(400).json({ error: 'Le paramètre de recherche est requis' });
+    }
+
+    try {
+        const searchTerm = `%${q.toLowerCase()}%`;
+        const { rows } = await pool.query(
+            'SELECT id_perso, nom_prenom, id_perso, numero_fiche FROM priseservice_repriseservice WHERE LOWER(nom_prenom) LIKE $1 OR LOWER(numero_fiche) LIKE $1 OR LOWER(id_perso) LIKE $1',
+            [searchTerm]
+        );
+
+        res.json(rows);
+    } catch (err) {
+        console.error('Erreur lors de la recherche de la fiche :', err);
+        res.status(500).json({ error: 'Une erreur est survenue lors de la recherche de la fiche' });
     }
 });
 app.get('/personnel', async (req, res) => {
@@ -906,7 +924,6 @@ app.get('/offres', async (req, res) => {
 app.get('/protected', authenticateToken, (req, res) => {
     res.json({ message: 'Route protégée accessible avec succès', user: req.user });
 });
-// Démarrer le serveur
 app.listen(port, () => {
     console.log(`Le serveur est en cours d'exécution sur le port ${port}`);
 });
