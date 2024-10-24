@@ -28,7 +28,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const pool = new Pool({
     host: env.DB_HOST || 'localhost',
     user: env.DB_USER || 'postgres',
-    password: env.DB_PASSWORD || '771817',
+    password: env.DB_PASSWORD || '156',
     database: env.DB_NAME || 'minsante',
     port: env.DB_PORT || 5432
 });
