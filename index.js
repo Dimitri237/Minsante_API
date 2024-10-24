@@ -12,7 +12,7 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const env = require('./env.json');
 
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 3000;
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -28,7 +28,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const pool = new Pool({
     host: env.DB_HOST || 'localhost',
     user: env.DB_USER || 'postgres',
-    password: env.DB_PASSWORD || '156',
+    password: env.DB_PASSWORD || '771817',
     database: env.DB_NAME || 'minsante',
     port: env.DB_PORT || 5432
 });
@@ -197,6 +197,23 @@ app.delete('/actes/:id', async (req, res) => {
         res.status(500).json({ message: 'Une erreur s\'est produite lors de la suppression de l\'acte' });
     }
 });
+app.delete('/formations/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        const query = 'DELETE FROM formations WHERE id = $1';
+        const result = await pool.query(query, [id]);
+
+        if (result.rowCount === 1) {
+            res.json({ message: 'Fichier supprimé avec succès' });
+        } else {
+            res.status(404).json({ message: 'Fichier non trouvé' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Une erreur s\'est produite lors de la suppression du fichier' });
+    }
+});
 app.delete('/offres/:id', async (req, res) => {
     const id = req.params.id;
 
@@ -252,6 +269,30 @@ app.get('/api/pdf/:id', async (req, res) => {
 
     try {
         const result = await pool.query('SELECT pdf_data, numero FROM actes WHERE id = $1', [id]);
+        if (result.rows.length > 0) {
+            const pdfBase64 = result.rows[0].pdf_data;
+            const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+            const numero = result.rows[0].numero; // Récupérez le numéro
+
+            // Configurez le nom du fichier
+            const fileName = `${numero}.pdf`; // Utilisez le numéro comme nom de fichier
+
+            res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.send(pdfBuffer);
+        } else {
+            res.status(404).send('PDF non trouvé');
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Erreur serveur');
+    }
+});
+app.get('/api/pdf2/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        const result = await pool.query('SELECT pdf_data, numero FROM formations WHERE id = $1', [id]);
         if (result.rows.length > 0) {
             const pdfBase64 = result.rows[0].pdf_data;
             const pdfBuffer = Buffer.from(pdfBase64, 'base64');
@@ -562,6 +603,33 @@ app.post('/actes', upload.single('pdf'), async (req, res) => {
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
+app.post('/formations', upload.single('pdf'), async (req, res) => {
+    try {
+        // Validate input data
+        const { type, titre, numero, signature_date } = req.body;
+        // ... validation logic ...
+
+        // Generate unique ID and timestamps
+        const id = uuidv4();
+        const create_at = new Date();
+        const update_at = new Date();
+
+        // Read and encode the PDF to Base64
+        const pdfData = req.file.buffer; // Access the buffer directly from the request
+        const pdfBase64 = pdfData.toString('base64');
+
+        // Insert data into the database
+        const query = 'INSERT INTO formations (id, type, titre, create_at, update_at, pdf_data, numero, signature_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
+        const values = [id, type, titre, create_at, update_at, pdfBase64, numero, signature_date];
+
+        await pool.query(query, values);
+        res.status(201).json({ message: 'Fichier créé avec succès' });
+
+    } catch (error) {
+        console.error('Erreur lors de la création du fichier :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
 // app.post('/actes', upload.single('pdf'), async (req, res) => {
 //   try {
 //     // Validate input data
@@ -597,6 +665,17 @@ app.get('/actes', async (req, res) => {
         res.status(200).json(actes);
     } catch (error) {
         console.error('Erreur lors de la récupération des actes :', error);
+        res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+});
+app.get('/formations', async (req, res) => {
+    try {
+        const query = 'SELECT * FROM formations';
+        const result = await pool.query(query);
+        const formations = result.rows;
+        res.status(200).json(formations);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des formations :', error);
         res.status(500).json({ message: 'Erreur interne du serveur' });
     }
 });
